@@ -1,107 +1,41 @@
-# Refleksjonsnotat - PG3402 Mikrotjenester
+# Individual Reflection - PG3402 Microservices
 
 **Student:** Mathias Alsos Paulsen
-**Prosjekt:** PKMN/OP Binder - Digital TCG Collection Manager
-**Dato:** Desember 2024
+**Project:** PKMN/OP Binder - Digital TCG Collection Manager
+**Date:** November 2025
 
 ---
 
-## 1. Prosjektoversikt og Måloppnåelse
+## Project Overview
 
-PKMN/OP Binder er en mikrotjenestebasert webapplikasjon for håndtering av Pokemon TCG-samlinger. Prosjektet demonstrerer kjerneprinsipper innen mikrotjenestearkitektur gjennom implementering av fire operasjonelle tjenester (Catalog, Collection, Media, API Gateway) med både synkron og asynkron kommunikasjon.
+For this exam, I built Pokemon Binder - a microservices-based web app for managing Pokémon TCG collections. The project includes four main services (API Gateway, Catalog, Collection, and Media) that communicate both synchronously through REST and asynchronously via RabbitMQ. The goal was to demonstrate core microservices principles while building something actually useful for TCG collectors like myself.
 
-### Oppnådde Krav
+## What I Built and Why
 
-**Kritiske krav for bestått (Grade E):**
-- ✅ **Krav 1-2:** Implementert fire tjenester med REST/HTTP kommunikasjon
-- ✅ **Krav 3:** Asynkron kommunikasjon via RabbitMQ med hendelsesdrevet arkitektur
+### The Core Architecture
 
-**Grunnleggende krav (Grade D-B):**
-- ✅ **Krav 4-6:** Klar tjenestestruktur, konsistent dokumentasjon, Docker-deployment
-- ✅ **Krav 7:** API Gateway med routing og rate limiting
-- ✅ **Krav 9-10:** Health checks via Actuator og Docker Compose-orkestrerering
+I decided to go with an event-driven architecture where the Collection Service (write model) and Catalog Service (read model) communicate through RabbitMQ. This was inspired by CQRS patterns we discussed in class, though I simplified it quite a bit for the scope of this project. When a user adds or removes a card, the Collection Service publishes an event that the Catalog Service picks up. This keeps the services loosely coupled and makes the system more scalable.
 
-Prosjektet oppfyller alle kritiske krav for bestått eksamen samt de fleste krav for karakterene D og B. Krav 8 (load balancing), 11 (sentralisert konfigurasjon), og 12 (flere instanser) er ikke implementert, men infrastrukturen er forberedt for disse utvidelsene.
+Each service got its own PostgreSQL database. At first, I was tempted to just use one shared database since it seemed simpler, but after thinking about it, the separate databases really enforce the microservices principle of service independence. Sure, it means I can't do easy JOINs across services anymore, but that's where the event-driven stuff comes in handy.
 
----
+### Technology Choices
 
-## 2. Arkitekturbeslutninger og Læringspunkter
+**Spring Boot** was an obvious choice since we used it throughout the course, and honestly, it just makes building REST APIs really quick. The Spring ecosystem has pretty much everything you need - Spring Cloud Gateway for the API Gateway, Spring AMQP for RabbitMQ, Spring Actuator for health checks, etc.
 
-### 2.1 Event-Driven Architecture (RabbitMQ)
+For the Media Service, I went with **Python Flask** instead of another Spring Boot service. This was partly to show that microservices can use different tech stacks (polyglot architecture), but also because serving static image files with Python is just way simpler than setting up a whole Java service for it. It's lightweight and does exactly what it needs to do.
 
-**Beslutning:** Implementere asynkron kommunikasjon mellom Collection Service og Catalog Service via RabbitMQ.
+**RabbitMQ** over Kafka was mainly because we covered it more in class and I felt more comfortable with it. For this project's scale (one producer, one consumer), RabbitMQ is more than enough. Kafka would probably be overkill.
 
-**Læringsutbytte:**
-Dette var den mest utfordrende og lærerike delen av prosjektet. Implementeringen krevde:
-- Forståelse av TopicExchange, queues, og routing keys
-- Håndtering av message serialization (Jackson JavaTimeModule for `Instant`-typer)
-- Debugging av container-til-container kommunikasjon i Docker-nettverk
-- Implementering av `@RabbitListener` for event consumption
+For the frontend, I just used vanilla JavaScript instead of React or Vue. The app isn't that complex UI-wise, and I wanted to keep the focus on the backend microservices architecture rather than getting caught up in frontend framework stuff.
 
-**Utfordring:** Først møtte jeg `InvalidDefinitionException` for Java 8 date/time-typer. Løsningen var å konfigurere `ObjectMapper` med `JavaTimeModule` i `RabbitMQConfig`. Dette lærte meg viktigheten av eksplisitt serialization-konfigurasjon i distribuerte systemer.
+## Biggest Challenges
 
-**Refleksjon:** Event-driven architecture gir løs kobling mellom tjenester, men introduserer eventual consistency. I produksjon ville jeg lagt til:
-- Dead letter queues for feilhåndtering
-- Retry-mekanismer med exponential backoff
-- Event versioning for bakoverkompatibilitet
+### RabbitMQ Integration - The Real Struggle
 
-### 2.2 Database per Service Pattern
+Getting RabbitMQ working properly was honestly the hardest part of this whole project. The theory makes sense - publish an event here, consume it there - but actually implementing it was a different story.
 
-**Beslutning:** Hver tjeneste har sin egen PostgreSQL-database (catalog_db, collection_db).
+My first major issue was with **message serialization**. I kept getting `InvalidDefinitionException` whenever I tried to send events that included Java 8 `Instant` fields (like timestamps). Turns out Jackson doesn't handle `java.time` types by default. After a bunch of Stack Overflow searching and reading docs, I had to configure a custom `MessageConverter` bean with the `JavaTimeModule`:
 
-**Læringsutbytte:**
-Denne beslutningen understreket forskjellen mellom monolittisk og mikrotjenestearkitektur. Fordeler jeg observerte:
-- Tjenester kan deployes og skaleres uavhengig
-- Ingen shared database-coupling
-- Hver tjeneste kontrollerer sitt eget skjema
-
-**Utfordring:** Uten en delt database må jeg tenke annerledes på datakonsistens. RabbitMQ-events løser dette, men det krever mer kompleks feilhåndtering enn en database-transaksjon.
-
-**Refleksjon:** I et større system ville jeg vurdert:
-- Saga pattern for distribuerte transaksjoner
-- Outbox pattern for garantert event publishing
-- Eventual consistency monitoring
-
-### 2.3 CQRS-Inspirert Design
-
-**Beslutning:** Separere write model (Collection Service) fra read model (Catalog Service).
-
-**Læringsutbytte:**
-Selv om dette ikke er full CQRS (ingen event sourcing), ga det verdifull innsikt i:
-- Optimalisering av tjenester for forskjellige bruksområder
-- Collection Service optimalisert for writes (brukerens samling)
-- Catalog Service optimalisert for reads (søk, filtrering, browsing)
-
-**Refleksjon:** Dette mønsteret skalerer godt. Catalog Service kan cached aggressivt siden kortdata er read-only. Collection Service kan fokusere på konsistens og validering av brukerdata.
-
-### 2.4 API Gateway som Single Entry Point
-
-**Beslutning:** Spring Cloud Gateway for all ekstern trafikk.
-
-**Læringsutbytte:**
-Gateway-mønsteret sentraliserer cross-cutting concerns:
-- Rate limiting (100 req/min per IP med Redis)
-- CORS-håndtering
-- Routing til backend-tjenester
-- Health checks for circuit breaker
-
-**Utfordring:** Først hadde jeg dupliserte CORS-konfigurasjoner i hver tjeneste. Cleanup viste viktigheten av å forstå hvor ansvar bør ligge i arkitekturen.
-
-**Refleksjon:** Gateway er kritisk i produksjon for:
-- Authentication/authorization enforcement
-- Request/response transformation
-- API versioning
-- Telemetry og logging
-
----
-
-## 3. Tekniske Utfordringer og Løsninger
-
-### 3.1 Jackson Serialization av java.time.Instant
-
-**Problem:** `InvalidDefinitionException` når RabbitMQ skulle serialisere events med `Instant`-felt.
-
-**Løsning:**
 ```java
 @Bean
 public MessageConverter messageConverter() {
@@ -112,130 +46,121 @@ public MessageConverter messageConverter() {
 }
 ```
 
-**Læring:** Java 8 date/time types krever eksplisitt modul-registrering. Dette gjelder ikke bare RabbitMQ, men alle Jackson-baserte serialiseringsscenarier.
+Once I got that sorted, everything started working. But man, that took way longer to figure out than it should have.
 
-### 3.2 Docker Networking og Service Discovery
+The second challenge was understanding **Docker networking** for container-to-container communication. In development, you can just use `localhost` for everything, but in Docker, services need to talk to each other using container names (like `rabbitmq:5672` or `catalog-db:5432`). This was confusing at first because the same code that worked locally wouldn't work in Docker until I switched the connection strings.
 
-**Problem:** Tjenester må finne hverandre uten hardkodede IP-adresser.
+### Database Migrations with Flyway
 
-**Løsning:** Docker Compose oppretter et bridge-nettverk hvor tjenester kan nås via servicenavn (f.eks. `rabbitmq:5672`, `catalog-db:5432`).
+Setting up Flyway was actually pretty smooth, but figuring out the best way to seed 258 Pokemon cards into the database took some thought. I ended up creating a V3 migration with all the INSERT statements. It's not the most elegant solution (the SQL file is huge), but it works and it's version controlled. Every time you start fresh, the cards are automatically loaded.
 
-**Læring:** Container orchestration håndterer DNS-oppslag. Viktig å forstå forskjellen mellom:
-- Intern kommunikasjon (service-navn)
-- Ekstern kommunikasjon (localhost:port mapping)
+## Decisions I Made and Why
 
-### 3.3 Flyway Migrations og Seed Data
+### Event-Driven but Not Full CQRS
 
-**Problem:** Hvordan laste inn 258 Pokemon-kort i databasen på en repetérbar måte?
+I wanted to implement a CQRS-inspired design where Collection Service handles writes and Catalog Service handles reads. However, I didn't go full CQRS with event sourcing - that seemed like way too much complexity for this project. Instead, both services have their own databases with their own schemas, and they stay in sync through events.
 
-**Løsning:** Flyway V3 migration med SQL INSERT-statements. Dette sikrer:
-- Versjonert dataseeding
-- Automatisk kjøring ved oppstart
-- Idempotent (kan kjøres flere ganger)
+The benefit here is that each service is optimized for what it needs to do. Collection Service focuses on data consistency and validation when users add/update cards. Catalog Service can be super aggressive with caching since card data is essentially read-only.
 
-**Læring:** Database migrations er ikke bare for schema, men også for seed data i dev/test-miljøer.
+**Trade-off:** The system is eventually consistent, not immediately consistent. When you add a card to your collection, there's a tiny delay before Catalog Service knows about it (milliseconds, but still). For this app, that's totally fine. For something like a payment system, you'd need to think harder about consistency.
 
----
+### API Gateway as Single Entry Point
 
-## 4. Forenklinger og Prioriteringer
+Using Spring Cloud Gateway as the single entry point was a no-brainer. It centralizes all the cross-cutting concerns - CORS, rate limiting, routing - in one place instead of duplicating that logic across every service.
 
-### 4.1 Hva jeg valgte IKKE å implementere
+I set up **Redis-based rate limiting** (100 requests per minute per IP) to prevent abuse. In production, you'd want more sophisticated rate limiting per user, but for a demo, this shows I understand the concept.
 
-**Share Service (User Story 3):**
-- Prioriterte å få Krav 1-3 solid implementert
-- Shareable links er en nice-to-have, ikke critical
-- Kan legges til uten store refactorings
+One mistake I made early on was configuring CORS in both the Gateway *and* the individual services. That caused some weird behavior until I realized the Gateway should handle it and the services shouldn't care.
 
-**OAuth2/OIDC Enforcement:**
-- Dependencies er på plass, men security er disablet
-- Forenkler testing og demonstrasjon
-- I produksjon ville dette vært første prioritet
+### Database per Service - Worth the Pain?
 
-**Load Balancing (Krav 8):**
-- Docker Compose kan skalere (`--scale`), men ikke konfigurert
-- Fokuserte på å få enkeltstående tjenester robuste først
+Having separate databases (catalog_db, collection_db) is definitely more work than a shared database. You can't just write a SQL JOIN to get data from both. You have to either:
+1. Make multiple HTTP calls and combine data in the application
+2. Use events to keep denormalized copies of data
+3. Accept that some queries just can't be done efficiently
 
-### 4.2 Hvorfor disse prioriteringene?
+For this project, option 2 (events) made the most sense. When a card is added to a collection, the Catalog Service gets notified and could update its own records (though currently it just logs the event).
 
-**Metodikk:** Jeg fulgte en "walking skeleton"-tilnærming:
-1. Først: Få kritiske krav (Krav 1-3) til å fungere end-to-end
-2. Deretter: Legg til observability og dokumentasjon
-3. Til slutt: Nice-to-have features
+**Would I do it again?** Yes, because it forces you to think about service boundaries and data ownership. In a real company with multiple teams, each team owning their service's database makes total sense. But for a solo project, I'll admit it's extra complexity.
 
-Dette sikret at jeg alltid hadde en fungerende demo som oppfylte minimumskravene, selv om jeg ikke rakk alle features.
+## What I'd Do Differently
 
----
+### Start with RabbitMQ Earlier
 
-## 5. Hva jeg ville gjort annerledes
+If I could do this project again, I'd set up RabbitMQ integration in the first week, not the last. It took way longer than expected to debug the serialization issues and Docker networking stuff. By the time I got it working, I was scrambling to finish other features.
 
-### 5.1 Tidligere Fokus på Asynkron Kommunikasjon
+Starting with the hardest part first would've given me more time to polish other things and maybe implement the Share Service (which I had to cut).
 
-RabbitMQ-implementeringen tok lengre tid enn forventet. I retrospekt ville jeg:
-- Startet med RabbitMQ-integrasjon tidligere i prosjektet
-- Testet event-flyten før jeg bygget masse annen funksjonalitet
-- Lest mer dokumentasjon om Spring AMQP i forkant
+### More Comprehensive Testing
 
-### 5.2 Mer Omfattende Testing
+I have some unit tests, but I'm missing a lot of integration tests. Specifically:
+- Testing the full event flow from Collection Service → RabbitMQ → Catalog Service
+- Integration tests with actual PostgreSQL and RabbitMQ containers (using Testcontainers)
+- End-to-end tests of the entire system with Docker Compose
 
-Prosjektet har enhetstester, men mangler:
-- Integrasjonstester for event-flyt
-- Contract testing mellom tjenester (Pact)
-- End-to-end tester med Docker Compose
+With more time, I'd definitely add these. Testing distributed systems is tricky, but it's super important.
 
-Med mer tid ville jeg implementert Testcontainers for integrerte tester mot RabbitMQ og PostgreSQL.
+### Better Observability from Day One
 
-### 5.3 Bedre Observability fra Starten
+I added Prometheus and Grafana near the end, but I should've had them running from the start. When you're debugging issues in a distributed system with multiple services, good observability is critical. Things like:
+- Distributed tracing (Zipkin or Jaeger) to see request flows across services
+- Custom metrics for business logic (cards added, collection size, etc.)
+- Structured logging with correlation IDs to track requests
 
-Prometheus og Grafana er satt opp, men:
-- Custom metrics kunne vært mer detaljerte
-- Distributed tracing (Zipkin/Jaeger) ville hjulpet med debugging
-- Structured logging kunne vært mer konsistent
+## Key Takeaways
 
----
+### Microservices Are Complex (But Powerful)
 
-## 6. Viktigste Læringspunkter
+The biggest thing I learned is that microservices introduce a *lot* of complexity compared to a monolith:
+- Network calls can fail - you need to handle retries, timeouts, circuit breakers
+- Debugging is harder when logic is spread across services
+- You need way more infrastructure (message brokers, service discovery, config servers)
+- Data consistency is challenging without a shared database
 
-### 6.1 Mikrotjenester er Komplekse
+**But**, you get some real benefits:
+- Services can be deployed and scaled independently
+- You can use different technologies for different services (Java, Python, etc.)
+- Teams can work on different services without stepping on each other
+- If one service crashes, the others keep running (resilience)
 
-Den største innsikten er at mikrotjenester introduserer betydelig kompleksitet:
-- Nettverk er upålitelig (latency, failures)
-- Distributed debugging er vanskelig
-- Eventual consistency krever annen tankegang
-- Mange flere "moving parts" (RabbitMQ, Redis, flere databaser)
+For this project's scale, a monolith would've been simpler. But the point was to learn microservices patterns, and I definitely did.
 
-**Men:** Kompleksiteten gir gevinster:
-- Uavhengig deployment og skalering
-- Teknologisk fleksibilitet (polyglot)
-- Team autonomy
-- Resilience (en tjeneste kan feile uten å ta ned hele systemet)
+### Event-Driven Architecture is Powerful but Tricky
 
-### 6.2 "Database per Service" er Kraftfullt, men Krevende
+Using RabbitMQ for async communication taught me a lot about loose coupling. Collection Service doesn't need to know anything about Catalog Service - it just publishes events. If I added a Notification Service later, it could just start consuming the same events without changing Collection Service at all.
 
-Å ikke kunne gjøre JOINs på tvers av tjenester endrer hvordan man designer APIer. Events og eventual consistency blir nødvendig.
+The tricky part is dealing with eventual consistency and making sure events don't get lost. In production, you'd want:
+- Dead letter queues for failed messages
+- Retry logic with exponential backoff
+- Event versioning so you can evolve events without breaking consumers
 
-### 6.3 Infrastruktur er Førsteborger
+### Infrastructure is a First-Class Citizen
 
-I mikrotjenesteverdenen er infrastruktur (RabbitMQ, Redis, Prometheus, Docker) like viktig som applikasjonskode. Å forstå hvordan disse komponentene fungerer sammen er kritisk.
+In a monolith, you mostly just care about your application code and maybe a database. In microservices, understanding Docker, RabbitMQ, Redis, Prometheus, and how they all fit together is just as important as the Java code.
 
-### 6.4 Dokumentasjon er Essensielt
+A lot of my time on this project wasn't spent writing business logic - it was spent configuring Docker Compose, debugging network issues, setting up health checks, etc. That's just the reality of microservices.
 
-Med flere tjenester, APIer, og kommunikasjonsmønstre blir god dokumentasjon (README, API docs, architecture diagrams) kritisk for at andre (og fremtidig deg selv) skal forstå systemet.
+### Documentation Matters Way More
 
----
+With multiple services, APIs, databases, and communication patterns, good documentation isn't optional. The README needs architecture diagrams, API examples, setup instructions, and troubleshooting tips. Otherwise, nobody (including future you) will understand how everything fits together.
 
-## 7. Konklusjon
+I spent a lot of time on the README for this project, and I think it paid off. It's way easier to explain the architecture when you have clear diagrams and examples.
 
-PKMN/OP Binder demonstrerer kjerneprinsipper i mikrotjenestearkitektur gjennom en praktisk implementering. Prosjektet oppfyller alle kritiske eksemenskrav og viser forståelse for:
-- Synkron og asynkron kommunikasjon
-- Database per service pattern
-- API Gateway pattern
-- Event-driven architecture
-- Docker containerization og orchestration
+## What I Didn't Implement (and Why)
 
-Største utfordring var RabbitMQ-integrasjonen, men dette ga også mest læring. Prosjektet har et solid fundament som enkelt kan utvides med Share Service, OAuth2, og load balancing.
+**Share Service:** This was the lowest priority of the three user stories. The core functionality (tracking cards and collections) was more important to get solid. The Share Service can be added later without major refactoring since it would just consume events from Collection Service.
 
-Jeg går ut av dette prosjektet med en mye dypere forståelse av både fordelene og kostnadene ved mikrotjenestearkitektur. Det er et kraftfullt mønster, men bør brukes med omhu og kun når kompleksiteten er berettiget.
+**OAuth2/OIDC Enforcement:** I have the dependencies and configuration in place, but I disabled security to make testing easier. In production, this would obviously need to be enabled. For a demo project, though, I wanted to keep it simple.
+
+**Load Balancing Demonstration:** The infrastructure is ready (API Gateway uses `lb://` URIs), but I didn't implement Consul service discovery or demonstrate scaling with multiple instances. This was a time trade-off - I prioritized getting the core requirements solid over the Grade A extras.
+
+## Conclusion
+
+Building PKMN/OP Binder taught me way more about microservices than any lecture could. The theory makes sense when you read about it, but actually implementing event-driven communication, dealing with eventual consistency, and debugging distributed systems is a completely different experience.
+
+The biggest lesson: microservices are a powerful architectural pattern, but they come with real costs. Use them when you need independent deployment, team autonomy, or polyglot tech stacks. Don't use them just because they're trendy - a well-built monolith is often the better choice for smaller projects.
+
+For this exam, though, I'm happy with what I built. All the critical requirements are solid, the architecture is clean, and the project demonstrates understanding of API Gateways, event-driven communication, database-per-service, and Docker orchestration. If I had another week, I'd add the Share Service, implement proper load balancing, and write more comprehensive tests. But for a month-long project while juggling other classes, I'm pretty satisfied with the result.
 
 ---
 
-**Ordtelling:** Ca. 1400 ord (innenfor 2-siders grense med normale marginer)
