@@ -10,8 +10,8 @@ A modern microservices-based web application for managing your Pokémon Trading 
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-Events-FF6600?logo=rabbitmq)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?logo=postgresql)
 
-**Student:** Mathias Alsos Paulsen
-**Course:** PG3402 Microservices
+**Student:** Mathias Alsos Paulsen 
+**Course:** PG3402 Microservices 
 **Date:** November 2025
 
 ---
