@@ -4,27 +4,41 @@ Use this checklist to deploy your application to production.
 
 ## Pre-Deployment
 
-- [ ] Code is pushed to GitHub
-- [ ] All tests pass locally
-- [ ] Docker images build successfully
-- [ ] Application runs correctly with `docker compose up`
+- [x] Code is pushed to GitHub
+- [x] All tests pass locally
+- [x] Docker images build successfully
+- [x] Application runs correctly with `docker compose up`
 
 ## CloudAMQP Setup (RabbitMQ)
 
-- [ ] CloudAMQP account created
-- [ ] Free "Little Lemur" instance created
-- [ ] Note down credentials:
-  - [ ] Hostname: `_________________`
-  - [ ] Username: `_________________`
-  - [ ] Password: `_________________`
+- [x] CloudAMQP account created
+- [x] Free "Little Lemur" instance created
+- [x] Note down credentials:
+  - [x] Hostname: `kebnekaise-01.lmq.cloudamqp.com`
+  - [x] Username: `zcoegfov`
+  - [x] Password: `lGnFTh2MkfHdFsee6QzCq3D9yRzNy3Yk`
+  - [x] AMQP URL: `amqps://zcoegfov:lGnFTh2MkfHdFsee6QzCq3D9yRzNy3Yk@kebnekaise.lmq.cloudamqp.com/zcoegfov`
 
 ## Render Backend Deployment
 
-- [ ] Render account created
-- [ ] PostgreSQL databases created:
-  - [ ] `catalog-db` created
-  - [ ] `collection-db` created
-- [ ] Redis instance created
+- [x] Render account created
+- [x] PostgreSQL databases created:
+  - [x] `catalog-db` created
+    - Internal Database URL `postgresql://catalog_db_wpol_user:bSujYnIDCTLxcrpegTRVR63BGK62SQII@dpg-d4a5g195pdvs73e0hii0-a/catalog_db_wpol`
+    - Hostname `dpg-d4a5g195pdvs73e0hii0-a`
+    - Port `5432`
+    - Database name `catalog_db_wpol`
+    - Username `catalog_db_wpol_user`
+    - Password `bSujYnIDCTLxcrpegTRVR63BGK62SQII`
+  - [x] `collection-db` created
+    - Internal Database URL `postgresql://collection_db_cu8y_user:3XMX9siiVcRMdGzWT0NkBpuz50QmKtdk@dpg-d4a5nver433s73ee46t0-a/collection_db_cu8y`
+    - Hostname `dpg-d4a5nver433s73ee46t0-a`
+    - Port `5432`
+    - Database name `collection_db_cu8y`
+    - Username `collection_db_cu8y_user`
+    - Password `3XMX9siiVcRMdGzWT0NkBpuz50QmKtdk`
+- [x] Redis instance created
+  - Internal Redis URL: `redis://red-d4a5qv0gjchc73fgkgpg:6379`
 - [ ] Services deployed:
   - [ ] API Gateway deployed
   - [ ] Catalog Service deployed

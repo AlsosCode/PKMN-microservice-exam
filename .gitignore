@@ -39,8 +39,8 @@ spring-boot-*.log
 .env.local
 
 # Unnecessary documentation files (keeping only README.md and REFLECTION.md for submission)
-SUCCESS.md
-TESTING.md
+DEPLOYMENT.md
+DEPLOYMENT-CHECKLIST.md
 
 # Build scripts (not needed for submission)
 build-and-run.sh
