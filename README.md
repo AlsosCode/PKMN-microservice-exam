@@ -264,10 +264,8 @@ pg3402-microservices-exam/
 ├── monitoring/
 │   └── prometheus.yml        # Prometheus scraping config
 ├── docker-compose.yml        # Multi-container orchestration
-├── render.yaml               # Render deployment blueprint
-├── DEPLOYMENT.md             # Comprehensive deployment guide
-├── DEPLOYMENT-CHECKLIST.md   # Printable deployment checklist
 ├── REFLECTION.md             # Individual reflections document
+├── .gitignore                # Git ignore rules
 ├── pom.xml                   # Parent Maven POM
 └── README.md                 # This file
 ```
@@ -465,11 +463,11 @@ docker compose logs -f collection-service
 
 ## 🌐 Deployment
 
-For production deployment to Render (backend) and Vercel (frontend), see:
-- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Comprehensive deployment guide
-- **[DEPLOYMENT-CHECKLIST.md](DEPLOYMENT-CHECKLIST.md)** - Printable checklist
+**Live Demo**: The frontend is deployed on [Vercel](https://pg3402-microservices-exam.vercel.app/) as a visual demo using localStorage for data persistence. This demonstrates the UI/UX without requiring backend infrastructure.
 
-**Cost**: $0/month on free tiers ✅
+For the **full microservices implementation** with RabbitMQ, PostgreSQL, and all backend services, run locally using Docker Compose (see "Quick Start" section above).
+
+**Demo Cost**: $0/month on Vercel free tier ✅
 
 ## 🛑 Stopping the Application
 
