@@ -9,6 +9,10 @@
   ],
   "routes": [
     {
+      "src": "/",
+      "dest": "/index-vercel.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/$1"
     }
