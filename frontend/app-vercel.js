@@ -13,23 +13,27 @@ let collectionCards = [];
 let currentView = 'catalog';
 let selectedCard = null;
 
-// Mock data - Sample cards from SV01
+// Mock data - Cards 240-258 (Secret Rares) from SV01
 const MOCK_CARDS = [
-    { id: 1, cardNumber: "001", name: "Sprigatito", setName: "Scarlet & Violet", rarity: "COMMON", type: "Grass", artist: "Kouki Saitou", imageUrl: "https://images.pokemontcg.io/sv1/1_hires.png" },
-    { id: 2, cardNumber: "002", name: "Floragato", setName: "Scarlet & Violet", rarity: "UNCOMMON", type: "Grass", artist: "Kouki Saitou", imageUrl: "https://images.pokemontcg.io/sv1/2_hires.png" },
-    { id: 3, cardNumber: "003", name: "Meowscarada", setName: "Scarlet & Violet", rarity: "RARE", type: "Grass", artist: "5ban Graphics", imageUrl: "https://images.pokemontcg.io/sv1/3_hires.png" },
-    { id: 4, cardNumber: "004", name: "Tarountula", setName: "Scarlet & Violet", rarity: "COMMON", type: "Grass", artist: "Kouki Saitou", imageUrl: "https://images.pokemontcg.io/sv1/4_hires.png" },
-    { id: 5, cardNumber: "005", name: "Spidops", setName: "Scarlet & Violet", rarity: "UNCOMMON", type: "Grass", artist: "Kouki Saitou", imageUrl: "https://images.pokemontcg.io/sv1/5_hires.png" },
-    { id: 10, cardNumber: "010", name: "Fuecoco", setName: "Scarlet & Violet", rarity: "COMMON", type: "Fire", artist: "Kouki Saitou", imageUrl: "https://images.pokemontcg.io/sv1/10_hires.png" },
-    { id: 11, cardNumber: "011", name: "Crocalor", setName: "Scarlet & Violet", rarity: "UNCOMMON", type: "Fire", artist: "Kouki Saitou", imageUrl: "https://images.pokemontcg.io/sv1/11_hires.png" },
-    { id: 12, cardNumber: "012", name: "Skeledirge", setName: "Scarlet & Violet", rarity: "RARE", type: "Fire", artist: "5ban Graphics", imageUrl: "https://images.pokemontcg.io/sv1/12_hires.png" },
-    { id: 20, cardNumber: "020", name: "Quaxly", setName: "Scarlet & Violet", rarity: "COMMON", type: "Water", artist: "Kouki Saitou", imageUrl: "https://images.pokemontcg.io/sv1/20_hires.png" },
-    { id: 21, cardNumber: "021", name: "Quaxwell", setName: "Scarlet & Violet", rarity: "UNCOMMON", type: "Water", artist: "Kouki Saitou", imageUrl: "https://images.pokemontcg.io/sv1/21_hires.png" },
-    { id: 22, cardNumber: "022", name: "Quaquaval", setName: "Scarlet & Violet", rarity: "RARE", type: "Water", artist: "5ban Graphics", imageUrl: "https://images.pokemontcg.io/sv1/22_hires.png" },
-    { id: 30, cardNumber: "030", name: "Pikachu", setName: "Scarlet & Violet", rarity: "COMMON", type: "Electric", artist: "Mitsuhiro Arita", imageUrl: "https://images.pokemontcg.io/sv1/30_hires.png" },
-    { id: 50, cardNumber: "050", name: "Lechonk", setName: "Scarlet & Violet", rarity: "COMMON", type: "Colorless", artist: "Sanosuke Sakuma", imageUrl: "https://images.pokemontcg.io/sv1/50_hires.png" },
-    { id: 100, cardNumber: "100", name: "Koraidon ex", setName: "Scarlet & Violet", rarity: "RARE_HOLO_EX", type: "Fighting", artist: "5ban Graphics", imageUrl: "https://images.pokemontcg.io/sv1/100_hires.png" },
-    { id: 101, cardNumber: "101", name: "Miraidon ex", setName: "Scarlet & Violet", rarity: "RARE_HOLO_EX", type: "Electric", artist: "5ban Graphics", imageUrl: "https://images.pokemontcg.io/sv1/101_hires.png" },
+    { id: 240, cardNumber: "240", name: "Professor's Research (Professor Sada)", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Trainer", artist: "Naoki Saito", imageUrl: "https://images.pokemontcg.io/sv1/240_hires.png" },
+    { id: 241, cardNumber: "241", name: "Professor's Research (Professor Turo)", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Trainer", artist: "Naoki Saito", imageUrl: "https://images.pokemontcg.io/sv1/241_hires.png" },
+    { id: 242, cardNumber: "242", name: "Team Star Grunt", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Trainer", artist: "AKIRA EGAWA", imageUrl: "https://images.pokemontcg.io/sv1/242_hires.png" },
+    { id: 243, cardNumber: "243", name: "Spidops ex", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Grass", artist: "Ryota Murayama", imageUrl: "https://images.pokemontcg.io/sv1/243_hires.png" },
+    { id: 244, cardNumber: "244", name: "Miraidon ex", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Electric", artist: "PLANETA Mochizuki", imageUrl: "https://images.pokemontcg.io/sv1/244_hires.png" },
+    { id: 245, cardNumber: "245", name: "Gardevoir ex", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Psychic", artist: "kirisAki", imageUrl: "https://images.pokemontcg.io/sv1/245_hires.png" },
+    { id: 246, cardNumber: "246", name: "Great Tusk ex", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Fighting", artist: "AKIRA EGAWA", imageUrl: "https://images.pokemontcg.io/sv1/246_hires.png" },
+    { id: 247, cardNumber: "247", name: "Koraidon ex", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Fighting", artist: "PLANETA Mochizuki", imageUrl: "https://images.pokemontcg.io/sv1/247_hires.png" },
+    { id: 248, cardNumber: "248", name: "Iron Treads ex", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Metal", artist: "AKIRA EGAWA", imageUrl: "https://images.pokemontcg.io/sv1/248_hires.png" },
+    { id: 249, cardNumber: "249", name: "Arven", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Trainer", artist: "Ryota Murayama", imageUrl: "https://images.pokemontcg.io/sv1/249_hires.png" },
+    { id: 250, cardNumber: "250", name: "Jacq", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Trainer", artist: "Sanosuke Sakuma", imageUrl: "https://images.pokemontcg.io/sv1/250_hires.png" },
+    { id: 251, cardNumber: "251", name: "Miriam", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Trainer", artist: "Ryota Murayama", imageUrl: "https://images.pokemontcg.io/sv1/251_hires.png" },
+    { id: 252, cardNumber: "252", name: "Penny", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Trainer", artist: "Megumi Mizutani", imageUrl: "https://images.pokemontcg.io/sv1/252_hires.png" },
+    { id: 253, cardNumber: "253", name: "Miraidon ex", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Electric", artist: "5ban Graphics", imageUrl: "https://images.pokemontcg.io/sv1/253_hires.png" },
+    { id: 254, cardNumber: "254", name: "Koraidon ex", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Fighting", artist: "5ban Graphics", imageUrl: "https://images.pokemontcg.io/sv1/254_hires.png" },
+    { id: 255, cardNumber: "255", name: "Nest Ball", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Trainer", artist: "Toyste Beach", imageUrl: "https://images.pokemontcg.io/sv1/255_hires.png" },
+    { id: 256, cardNumber: "256", name: "Rare Candy", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Trainer", artist: "Toyste Beach", imageUrl: "https://images.pokemontcg.io/sv1/256_hires.png" },
+    { id: 257, cardNumber: "257", name: "Basic Lightning Energy", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Energy", artist: "Toyste Beach", imageUrl: "https://images.pokemontcg.io/sv1/257_hires.png" },
+    { id: 258, cardNumber: "258", name: "Basic Fighting Energy", setName: "Scarlet & Violet Base Set", rarity: "SECRET_RARE", type: "Energy", artist: "Toyste Beach", imageUrl: "https://images.pokemontcg.io/sv1/258_hires.png" },
 ];
 
 // Initialize app
