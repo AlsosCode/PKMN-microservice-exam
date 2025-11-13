@@ -149,7 +149,19 @@ async function loadCatalog() {
         const response = await fetch(`${API_BASE_URL}/sets/${SET_CODE}/cards`);
         if (!response.ok) throw new Error('Failed to fetch cards');
 
-        allCards = await response.json();
+        const allCardsFromAPI = await response.json();
+
+        // In production (Vercel), show only cards 240-258 (last 18 cards)
+        // Locally, show all 258 cards
+        if (isProduction) {
+            allCards = allCardsFromAPI.filter(card => {
+                const cardNum = parseInt(card.cardNumber);
+                return cardNum >= 240 && cardNum <= 258;
+            });
+        } else {
+            allCards = allCardsFromAPI;
+        }
+
         displayCards(allCards);
 
         document.getElementById('total-cards').textContent = allCards.length;

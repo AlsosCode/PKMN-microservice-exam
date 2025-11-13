@@ -5,6 +5,20 @@ spring:
   application:
     name: catalog-service
 
+  cloud:
+    consul:
+      enabled: true
+      host: ${CONSUL_HOST:localhost}
+      port: ${CONSUL_PORT:8500}
+      config:
+        enabled: true
+        format: YAML
+      discovery:
+        enabled: true
+        health-check-path: /actuator/health
+        health-check-interval: 10s
+        instance-id: ${spring.application.name}:${INSTANCE_ID:${random.value}}
+
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:catalog_db}
     username: ${DB_USER:postgres}

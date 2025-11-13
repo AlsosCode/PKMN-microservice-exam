@@ -20,6 +20,18 @@ spring:
 
 # Gateway configuration
   cloud:
+    consul:
+      enabled: true
+      host: ${CONSUL_HOST:localhost}
+      port: ${CONSUL_PORT:8500}
+      config:
+        enabled: true
+        format: YAML
+      discovery:
+        enabled: true
+        health-check-path: /actuator/health
+        health-check-interval: 10s
+        instance-id: ${spring.application.name}:${random.value}
     gateway:
       # Global CORS configuration
       globalcors:

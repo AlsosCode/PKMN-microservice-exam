@@ -152,7 +152,53 @@ I spent a lot of time on the README for this project, and I think it paid off. I
 
 **OAuth2/OIDC Enforcement:** I have the dependencies and configuration in place, but I disabled security to make testing easier. In production, this would obviously need to be enabled. For a demo project, though, I wanted to keep it simple.
 
-**Load Balancing Demonstration:** The infrastructure is ready (API Gateway uses `lb://` URIs), but I didn't implement Consul service discovery or demonstrate scaling with multiple instances. This was a time trade-off - I prioritized getting the core requirements solid over the Grade A extras.
+## Late-Stage Discovery: Consul and MinIO Configuration
+
+### The Problem
+
+When preparing the final submission, I discovered two services in my docker-compose.yml that weren't actually being used:
+
+1. **Consul** - Running but disabled in all service configurations (`spring.cloud.consul.enabled=false`)
+2. **MinIO** - Running but never used (media service uses filesystem with images baked into Docker image)
+
+Both services were consuming resources and adding startup complexity without providing any value. Services were depending on Consul being healthy before starting, which added 10-15 seconds to startup time for no benefit.
+
+### Why This Happened
+
+I initially set up Consul early in the project with the intention of implementing centralized configuration (Grade A requirement #11). However, during development, I encountered startup errors related to Consul configuration format. To quickly move forward and focus on core requirements, I disabled Consul in the application.yml files with the intention of coming back to it later.
+
+MinIO was added as a "nice to have" for potential object storage needs, but I ended up baking images directly into the media service Docker image to avoid Docker volume mount issues on macOS (osxfs causes `[Errno 35] Resource deadlock avoided` errors when serving many files concurrently).
+
+### The Solution
+
+For the final submission, I:
+
+1. **Re-enabled Consul** to meet Grade A requirement #11:
+   - Changed `consul.enabled: false` → `consul.enabled: true` in all application.yml files
+   - Added proper Consul connection configuration (host, port, service discovery)
+   - Verified all services register with Consul on startup
+   - Documented Consul UI access at http://localhost:8500
+
+2. **Completely removed MinIO**:
+   - Deleted from docker-compose.yml
+   - Removed volume definitions
+   - Updated documentation to explain why it's not needed
+
+### Lessons Learned
+
+**Start with requirements, not assumptions:** I assumed I'd need Consul early on, set it up, ran into issues, disabled it, and forgot about it. A better approach would've been to implement core requirements first, then add Grade A features systematically.
+
+**Delete unused code:** Having Consul and MinIO running but unused is confusing for anyone trying to understand the system. If something isn't providing value, remove it or document why it's there.
+
+**Test fresh setup regularly:** I was running `docker compose up` on a system that already had containers cached. When I tested a completely fresh clone (simulating what an examiner would do), I discovered the Consul dependency issues immediately.
+
+**Infrastructure as code needs maintenance:** Docker Compose files, like code, can accumulate cruft. Regular cleanup helps keep the system understandable.
+
+### Impact on Grade
+
+This discovery was actually positive - it forced me to properly implement Consul service discovery, which satisfies requirement #11 for Grade A. What was initially a "nice to have that I disabled" became a properly implemented feature that meets exam requirements.
+
+The final system is now cleaner, better documented, and actually uses Consul as intended.
 
 ## Conclusion
 
