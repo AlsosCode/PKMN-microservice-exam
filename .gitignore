@@ -101,3 +101,7 @@ frontend/build/
 *.swp
 *.swo
 *~
+
+# Card images (large binary files - not for version control)
+Scarlet&Violet-Cards/
+*.webp
